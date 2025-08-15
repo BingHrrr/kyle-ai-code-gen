@@ -14,5 +14,4 @@ public class BodyController {
    public ResponseEntity<String> body(){
        return ResponseEntity.ok("ok");
    }
-
 }
