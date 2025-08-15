@@ -14,8 +14,4 @@ public class BodyController {
    public ResponseEntity<String> body(){
        return ResponseEntity.ok("ok");
    }
-    @GetMapping("/test1")
-    public ResponseEntity<String> body2(){
-        return ResponseEntity.ok("ok");
-    }
 }
