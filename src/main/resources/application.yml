@@ -1,6 +1,12 @@
 spring:
   application:
     name: kyle-ai-code-gen
+    # mysql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/kyle_ai_code
+    username: root
+    password: bingbing001
 
 server:
   port: 8123
