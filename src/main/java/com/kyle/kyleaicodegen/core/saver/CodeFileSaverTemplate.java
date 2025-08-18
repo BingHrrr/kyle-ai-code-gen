@@ -1,7 +1,6 @@
 package com.kyle.kyleaicodegen.core.saver;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
@@ -26,11 +25,11 @@ public abstract class CodeFileSaverTemplate<T> {
      * @param result
      * @return
      */
-    public final File saveCode(T result) {
+    public final File saveCode(T result, Long appId) {
         // 校验参数
         validate(result);
         // 构建唯一目录
-        String baseDir = buildUniqueDir();
+        String baseDir = buildUniqueDir(appId);
         // 保存文件（子类实现）
         saveFiles(result, baseDir);
         // 返回文件目录对象
@@ -52,9 +51,9 @@ public abstract class CodeFileSaverTemplate<T> {
      *
      * @return 返回创建好的完整目录路径
      */
-    protected final String buildUniqueDir() {
+    protected final String buildUniqueDir(Long appId) {
         String bizType = getCodeType().getValue();
-        String uniqueDir = StrUtil.format("{}_{}", bizType, IdUtil.getSnowflakeNextIdStr());
+        String uniqueDir = StrUtil.format("{}_{}", bizType, appId);
         String dirPath = ROOT_DIR + File.separator + uniqueDir;
         FileUtil.mkdir(dirPath);
         return dirPath;
