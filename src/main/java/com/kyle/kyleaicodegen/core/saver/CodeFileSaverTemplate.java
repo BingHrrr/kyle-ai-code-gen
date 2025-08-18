@@ -2,6 +2,7 @@ package com.kyle.kyleaicodegen.core.saver;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import com.kyle.kyleaicodegen.constant.AppConstant;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
@@ -18,7 +19,7 @@ public abstract class CodeFileSaverTemplate<T> {
     /**
      * 根目录
      */
-    protected static final String ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_output";
+    protected static final String ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
     /**
      *

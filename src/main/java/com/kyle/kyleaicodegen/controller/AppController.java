@@ -12,10 +12,7 @@ import com.kyle.kyleaicodegen.constant.UserConstant;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.exception.ThrowUtils;
-import com.kyle.kyleaicodegen.model.dto.app.AppAddRequest;
-import com.kyle.kyleaicodegen.model.dto.app.AppAdminUpdateRequest;
-import com.kyle.kyleaicodegen.model.dto.app.AppQueryRequest;
-import com.kyle.kyleaicodegen.model.dto.app.AppUpdateRequest;
+import com.kyle.kyleaicodegen.model.dto.app.*;
 import com.kyle.kyleaicodegen.model.entitiy.App;
 import com.kyle.kyleaicodegen.model.entitiy.User;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
@@ -171,6 +168,25 @@ public class AppController {
         }
         boolean result = appService.removeById(id);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 应用部署
+     *
+     * @param appDeployRequest 部署请求
+     * @param request          请求
+     * @return 部署 URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR);
+        Long appId = appDeployRequest.getAppId();
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务部署应用
+        String deployUrl = appService.deployApp(appId, loginUser);
+        return ResultUtils.success(deployUrl);
     }
 
     /**
