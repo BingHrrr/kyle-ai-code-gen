@@ -9,7 +9,7 @@ import com.kyle.kyleaicodegen.constant.UserConstant;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.exception.ThrowUtils;
-import com.kyle.kyleaicodegen.model.dto.*;
+import com.kyle.kyleaicodegen.model.dto.user.*;
 import com.kyle.kyleaicodegen.model.entitiy.User;
 import com.kyle.kyleaicodegen.model.vo.LoginUserVO;
 import com.kyle.kyleaicodegen.model.vo.UserVO;

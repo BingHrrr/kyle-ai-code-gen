@@ -6,7 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.mapper.UserMapper;
-import com.kyle.kyleaicodegen.model.dto.UserQueryRequest;
+import com.kyle.kyleaicodegen.model.dto.user.UserQueryRequest;
 import com.kyle.kyleaicodegen.model.entitiy.User;
 import com.kyle.kyleaicodegen.model.enums.UserRoleEnum;
 import com.kyle.kyleaicodegen.model.vo.LoginUserVO;
