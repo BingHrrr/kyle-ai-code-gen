@@ -1,6 +1,7 @@
 package com.kyle.kyleaicodegen.core;
 
 import com.kyle.kyleaicodegen.ai.AiCodeGenService;
+import com.kyle.kyleaicodegen.ai.AiCodeGenServiceFactory;
 import com.kyle.kyleaicodegen.ai.model.HtmlCodeResult;
 import com.kyle.kyleaicodegen.ai.model.MultiFileCodeResult;
 import com.kyle.kyleaicodegen.core.parser.CodeParserExecutor;
@@ -26,7 +27,7 @@ import java.io.File;
 public class AiCodeGenFacade {
 
     @Resource
-    private AiCodeGenService aiCodeGenService;
+    private AiCodeGenServiceFactory aiCodeGenServiceFactory;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -39,6 +40,7 @@ public class AiCodeGenFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
+        AiCodeGenService aiCodeGenService = aiCodeGenServiceFactory.getAiCodeGenService(appId);
         return switch (codeGenTypeEnum) {
             // 非流式无需解析
             case HTML -> {
@@ -68,6 +70,7 @@ public class AiCodeGenFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
+        AiCodeGenService aiCodeGenService = aiCodeGenServiceFactory.getAiCodeGenService(appId);
         return switch (codeGenTypeEnum) {
             // 流式输出 需要先解析再保存
             case HTML -> {
