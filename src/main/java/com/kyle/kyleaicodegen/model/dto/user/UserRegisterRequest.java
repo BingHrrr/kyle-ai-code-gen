@@ -1,4 +1,4 @@
-package com.kyle.kyleaicodegen.model.dto;
+package com.kyle.kyleaicodegen.model.dto.user;
 
 import lombok.Data;
 

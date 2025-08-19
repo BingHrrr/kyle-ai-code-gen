@@ -1,6 +1,6 @@
 package com.kyle.kyleaicodegen.service;
 
-import com.kyle.kyleaicodegen.model.dto.UserQueryRequest;
+import com.kyle.kyleaicodegen.model.dto.user.UserQueryRequest;
 import com.kyle.kyleaicodegen.model.entitiy.User;
 import com.kyle.kyleaicodegen.model.vo.LoginUserVO;
 import com.kyle.kyleaicodegen.model.vo.UserVO;
