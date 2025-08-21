@@ -40,7 +40,7 @@ public class AiCodeGenFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
-        AiCodeGenService aiCodeGenService = aiCodeGenServiceFactory.getAiCodeGenService(appId);
+        AiCodeGenService aiCodeGenService = aiCodeGenServiceFactory.getAiCodeGenService(appId, codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             // 非流式无需解析
             case HTML -> {
@@ -70,7 +70,7 @@ public class AiCodeGenFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
-        AiCodeGenService aiCodeGenService = aiCodeGenServiceFactory.getAiCodeGenService(appId);
+        AiCodeGenService aiCodeGenService = aiCodeGenServiceFactory.getAiCodeGenService(appId,codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             // 流式输出 需要先解析再保存
             case HTML -> {
@@ -80,6 +80,10 @@ public class AiCodeGenFacade {
             case MULTI_FILE -> {
                 Flux<String> multiFileCodeStream = aiCodeGenService.generateMultiFileCodeStream(userMessage);
                 yield processCodeStream(multiFileCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+            }
+            case VUE_PROJECT -> {
+                Flux<String> vueProjectCodeStream = aiCodeGenService.generateVueProjectCodeStream(appId, userMessage);
+                yield processCodeStream(vueProjectCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
