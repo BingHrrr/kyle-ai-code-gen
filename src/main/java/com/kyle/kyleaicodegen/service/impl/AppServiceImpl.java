@@ -7,6 +7,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.kyle.kyleaicodegen.constant.AppConstant;
 import com.kyle.kyleaicodegen.core.AiCodeGenFacade;
+import com.kyle.kyleaicodegen.core.handler.StreamHandlerExecutor;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.exception.ThrowUtils;
@@ -53,6 +54,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
 
     @Override
     public AppVO getAppVO(App app) {
@@ -184,19 +188,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         // 5.添加用户消息到数据库
         chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
         // 6. 调用 AI 生成代码
-        Flux<String> contentFlux = aiCodeGenFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
+        Flux<String> contentStream = aiCodeGenFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
         // 7. 收集AI的响应 结束后存入数据库
-        StringBuilder aiResponse = new StringBuilder();
-        return contentFlux.map(chunk ->{
-            aiResponse.append(chunk);
-            return chunk;
-        }).doOnComplete(()->{
-            String aiResponseString = aiResponse.toString();
-            chatHistoryService.addChatMessage(appId, aiResponseString, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-        }).doOnError(e->{
-            String errorMessage = "AI 生成代码失败" + e.getMessage();
-            chatHistoryService.addChatMessage(appId, errorMessage, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-        });
+        return streamHandlerExecutor.doExecute(contentStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
 
     /**

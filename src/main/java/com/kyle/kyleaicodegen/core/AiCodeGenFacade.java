@@ -1,14 +1,21 @@
 package com.kyle.kyleaicodegen.core;
 
+import cn.hutool.json.JSONUtil;
 import com.kyle.kyleaicodegen.ai.AiCodeGenService;
 import com.kyle.kyleaicodegen.ai.AiCodeGenServiceFactory;
 import com.kyle.kyleaicodegen.ai.model.HtmlCodeResult;
 import com.kyle.kyleaicodegen.ai.model.MultiFileCodeResult;
+import com.kyle.kyleaicodegen.ai.model.message.AiResponseMessage;
+import com.kyle.kyleaicodegen.ai.model.message.ToolExecutedMessage;
+import com.kyle.kyleaicodegen.ai.model.message.ToolRequestMessage;
 import com.kyle.kyleaicodegen.core.parser.CodeParserExecutor;
 import com.kyle.kyleaicodegen.core.saver.CodeFileSaverExecutor;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -82,8 +89,8 @@ public class AiCodeGenFacade {
                 yield processCodeStream(multiFileCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             case VUE_PROJECT -> {
-                Flux<String> vueProjectCodeStream = aiCodeGenService.generateVueProjectCodeStream(appId, userMessage);
-                yield processCodeStream(vueProjectCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+                TokenStream tokenStream = aiCodeGenService.generateVueProjectCodeStream(appId, userMessage);
+                yield processTokenStream(tokenStream);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
@@ -91,6 +98,44 @@ public class AiCodeGenFacade {
             }
         };
     }
+
+    /**
+     * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
+     *
+     * @param tokenStream TokenStream 对象
+     * @return Flux<String> 流式响应
+     */
+    private Flux<String> processTokenStream(TokenStream tokenStream) {
+        // 可以理解为用sink向流中添加一些内容
+        return Flux.create(sink -> {
+            // AI 有响应
+            tokenStream.onPartialResponse((String partialResponse) -> {
+                        AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
+                        sink.next(JSONUtil.toJsonStr(aiResponseMessage));
+                    })
+                    // 工具第一次有响应
+                    .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
+                        ToolRequestMessage toolRequestMessage = new ToolRequestMessage(toolExecutionRequest);
+                        sink.next(JSONUtil.toJsonStr(toolRequestMessage));
+                    })
+                    // 工具调用结束
+                    .onToolExecuted((ToolExecution toolExecution) -> {
+                        ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
+                        sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
+                    })
+                    // 结束AI调用
+                    .onCompleteResponse((ChatResponse response) -> {
+                        sink.complete();
+                    })
+                    // 出现错误
+                    .onError((Throwable error) -> {
+                        error.printStackTrace();
+                        sink.error(error);
+                    })
+                    .start();
+        });
+    }
+
 
     /**
      * 通用的流式代码处理方法
