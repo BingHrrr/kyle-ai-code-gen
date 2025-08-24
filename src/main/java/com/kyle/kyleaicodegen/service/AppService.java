@@ -17,6 +17,8 @@ import java.util.List;
  */
 public interface AppService extends IService<App> {
 
+    void generateAppScreenshotAsync(Long appId, String appUrl);
+
     /**
      * 通过对话生成应用代码
      *

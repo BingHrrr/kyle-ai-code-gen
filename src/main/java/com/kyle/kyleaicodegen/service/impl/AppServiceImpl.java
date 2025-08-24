@@ -22,6 +22,7 @@ import com.kyle.kyleaicodegen.model.vo.AppVO;
 import com.kyle.kyleaicodegen.model.vo.UserVO;
 import com.kyle.kyleaicodegen.service.AppService;
 import com.kyle.kyleaicodegen.service.ChatHistoryService;
+import com.kyle.kyleaicodegen.service.ScreenshotService;
 import com.kyle.kyleaicodegen.service.UserService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -62,6 +63,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     @Resource
     private VueProjectBuilder vueProjectBuilder;
 
+    @Resource
+    private ScreenshotService screenshotService;
+    
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -179,10 +183,33 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         updateApp.setDeployedTime(LocalDateTime.now());
         boolean updateResult = this.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
-        // 9. 返回可访问的 URL
-        return String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        // 10. 返回可访问的 URL
+        String deployUrl = String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        // 部署之后，触发截图+上传
+        generateAppScreenshotAsync(appId, deployUrl);
+        return deployUrl;
     }
 
+    /**
+     * 异步生成应用截图并更新封面
+     *
+     * @param appId  应用ID
+     * @param deployUrl 应用访问URL
+     */
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String deployUrl) {
+        // 使用虚拟线程异步执行
+        Thread.startVirtualThread(() -> {
+            // 调用截图服务生成截图并上传
+            String screenshotUrl = screenshotService.generateAndUploadScreenshot(deployUrl);
+            // 更新应用封面字段
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setCover(screenshotUrl);
+            boolean updated = this.updateById(updateApp);
+            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
+        });
+    }
 
     @Override
     public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
