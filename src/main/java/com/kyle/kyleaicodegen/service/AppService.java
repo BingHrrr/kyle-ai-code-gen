@@ -1,5 +1,6 @@
 package com.kyle.kyleaicodegen.service;
 
+import com.kyle.kyleaicodegen.model.dto.app.AppAddRequest;
 import com.kyle.kyleaicodegen.model.dto.app.AppQueryRequest;
 import com.kyle.kyleaicodegen.model.entitiy.User;
 import com.kyle.kyleaicodegen.model.vo.AppVO;
@@ -16,6 +17,8 @@ import java.util.List;
  * @author Haoran Wang
  */
 public interface AppService extends IService<App> {
+
+    void generateAppScreenshotAsync(Long appId, String appUrl);
 
     /**
      * 通过对话生成应用代码
@@ -51,6 +54,8 @@ public interface AppService extends IService<App> {
      * @return
      */
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
+
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     /**
      *
