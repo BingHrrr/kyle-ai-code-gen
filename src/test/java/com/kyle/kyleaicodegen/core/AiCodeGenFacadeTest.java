@@ -18,13 +18,27 @@ class AiCodeGenFacadeTest {
 
     @Test
     void generateAndSaveCode() {
-        File file = aiCodeGenFacade.generateAndSaveCode("生成一个登录界面，不超过50行代码", CodeGenTypeEnum.HTML);
+        File file = aiCodeGenFacade.generateAndSaveCode("生成一个登录界面，不超过50行代码", CodeGenTypeEnum.HTML, 1L);
         Assertions.assertNotNull(file);
     }
 
     @Test
     void generateAndSaveCodeStream() {
-        Flux<String> codeStream = aiCodeGenFacade.generateAndSaveCodeStream("登陆页面，不超过50行", CodeGenTypeEnum.MULTI_FILE);
+        Flux<String> codeStream = aiCodeGenFacade.generateAndSaveCodeStream("登陆页面，不超过50行", CodeGenTypeEnum.MULTI_FILE,1L);
+        // 阻塞等待所有数据收集完成
+        List<String> result = codeStream.collectList().block();
+        // 验证结果
+        Assertions.assertNotNull(result);
+        String completeContent = String.join("", result);
+        Assertions.assertNotNull(completeContent);
+    }
+
+
+    @Test
+    void generateVueProjectCodeStream() {
+        Flux<String> codeStream = aiCodeGenFacade.generateAndSaveCodeStream(
+                "简单的任务记录网站，总代码量不超过 200 行",
+                CodeGenTypeEnum.VUE_PROJECT, 1L);
         // 阻塞等待所有数据收集完成
         List<String> result = codeStream.collectList().block();
         // 验证结果
