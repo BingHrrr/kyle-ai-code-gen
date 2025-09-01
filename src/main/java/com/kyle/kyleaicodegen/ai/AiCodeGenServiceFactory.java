@@ -2,7 +2,7 @@ package com.kyle.kyleaicodegen.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.kyle.kyleaicodegen.ai.tools.FileWriteTool;
+import com.kyle.kyleaicodegen.ai.tools.ToolManager;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
@@ -43,6 +43,9 @@ public class AiCodeGenServiceFactory {
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ToolManager toolManager;
     /**
      * AI 服务实例缓存
      * 缓存策略：
@@ -93,7 +96,7 @@ public class AiCodeGenServiceFactory {
                             .chatModel(chatModel)
                             .streamingChatModel(reasoningStreamingChatModel)
                             .chatMemoryProvider(memoryId -> chatMemory)
-                            .tools(new FileWriteTool())
+                            .tools(toolManager.getAllTools())
                             .hallucinatedToolNameStrategy(toolExecutionRequest
                                     -> ToolExecutionResultMessage.from(toolExecutionRequest, "没有此工具：" + toolExecutionRequest.name()))
                             .build();
