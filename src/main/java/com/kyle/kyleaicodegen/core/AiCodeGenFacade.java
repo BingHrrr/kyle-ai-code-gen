@@ -8,6 +8,8 @@ import com.kyle.kyleaicodegen.ai.model.MultiFileCodeResult;
 import com.kyle.kyleaicodegen.ai.model.message.AiResponseMessage;
 import com.kyle.kyleaicodegen.ai.model.message.ToolExecutedMessage;
 import com.kyle.kyleaicodegen.ai.model.message.ToolRequestMessage;
+import com.kyle.kyleaicodegen.constant.AppConstant;
+import com.kyle.kyleaicodegen.core.builder.VueProjectBuilder;
 import com.kyle.kyleaicodegen.core.parser.CodeParserExecutor;
 import com.kyle.kyleaicodegen.core.saver.CodeFileSaverExecutor;
 import com.kyle.kyleaicodegen.exception.BusinessException;
@@ -36,6 +38,8 @@ public class AiCodeGenFacade {
     @Resource
     private AiCodeGenServiceFactory aiCodeGenServiceFactory;
 
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
     /**
      * 统一入口：根据类型生成并保存代码
      *
@@ -90,7 +94,7 @@ public class AiCodeGenFacade {
             }
             case VUE_PROJECT -> {
                 TokenStream tokenStream = aiCodeGenService.generateVueProjectCodeStream(appId, userMessage);
-                yield processTokenStream(tokenStream);
+                yield processTokenStream(tokenStream, appId);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
@@ -105,7 +109,7 @@ public class AiCodeGenFacade {
      * @param tokenStream TokenStream 对象
      * @return Flux<String> 流式响应
      */
-    private Flux<String> processTokenStream(TokenStream tokenStream) {
+    private Flux<String> processTokenStream(TokenStream tokenStream, Long appId) {
         // 可以理解为用sink向流中添加一些内容
         return Flux.create(sink -> {
             // AI 有响应
@@ -125,6 +129,9 @@ public class AiCodeGenFacade {
                     })
                     // 结束AI调用
                     .onCompleteResponse((ChatResponse response) -> {
+                        // 同步构建Vue项目
+                        String buildPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                        vueProjectBuilder.buildProject(buildPath);
                         sink.complete();
                     })
                     // 出现错误

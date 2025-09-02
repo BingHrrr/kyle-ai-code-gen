@@ -2,6 +2,7 @@ package com.kyle.kyleaicodegen.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.kyle.kyleaicodegen.ai.guardrail.PromptGuardrail;
 import com.kyle.kyleaicodegen.ai.tools.ToolManager;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
@@ -93,8 +94,11 @@ public class AiCodeGenServiceFactory {
                         .streamingChatModel(reasoningStreamingChatModel)
                         .chatMemoryProvider(memoryId -> chatMemory)
                         .tools(toolManager.getAllTools())
+                        .inputGuardrails(new PromptGuardrail())
+                        // 幻觉解决策略
                         .hallucinatedToolNameStrategy(toolExecutionRequest
                                 -> ToolExecutionResultMessage.from(toolExecutionRequest, "没有此工具：" + toolExecutionRequest.name()))
+                        .maxSequentialToolsInvocations(30)  //每次最大调用工具次数
                         .build();
             }
             case HTML, MULTI_FILE -> {
@@ -102,6 +106,7 @@ public class AiCodeGenServiceFactory {
                 yield AiServices.builder(AiCodeGenService.class)
                     .chatModel(chatModel)
                     .streamingChatModel(openAiStreamingChatModel)
+                    .inputGuardrails(new PromptGuardrail())
                     .chatMemory(chatMemory)
                     .build();
             }
