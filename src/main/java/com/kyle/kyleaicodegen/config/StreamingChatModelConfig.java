@@ -9,15 +9,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 /**
- * 配置流式模型 多例
- * 用于Vue工程
- * @author Haoran Wang
- * @since 2025
+ * 多例StreamingChatModel
+ * 用于html、原生多文件
  */
 @Configuration
-@ConfigurationProperties(prefix = "langchain4j.open-ai.reasoning-streaming-chat-model")
+@ConfigurationProperties(prefix = "langchain4j.open-ai.streaming-chat-model")
 @Data
-public class ReasoningStreamingChatModelConfig {
+public class StreamingChatModelConfig {
 
     private String baseUrl;
 
@@ -29,16 +27,13 @@ public class ReasoningStreamingChatModelConfig {
 
     private Double temperature;
 
-    private boolean logRequests = false;
+    private boolean logRequests;
 
-    private boolean logResponses = false;
+    private boolean logResponses;
 
-    /**
-     * 推理流式模型（用于 Vue 项目生成，带工具调用）
-     */
     @Bean
     @Scope("prototype")
-    public StreamingChatModel reasoningStreamingChatModelPrototype() {
+    public StreamingChatModel streamingChatModelPrototype() {
         return OpenAiStreamingChatModel.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)

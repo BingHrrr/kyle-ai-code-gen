@@ -7,6 +7,7 @@ import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
 import com.kyle.kyleaicodegen.service.ChatHistoryService;
+import com.kyle.kyleaicodegen.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -28,15 +29,9 @@ import java.time.Duration;
 @Configuration
 @Slf4j
 public class AiCodeGenServiceFactory {
-
-    @Resource
+    // 智能路由和普通对话都是chatModel 需要指定name
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
-
-    @Resource
-    private StreamingChatModel openAiStreamingChatModel;
-
-    @Resource
-    private StreamingChatModel reasoningStreamingChatModel;
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
@@ -91,20 +86,25 @@ public class AiCodeGenServiceFactory {
                 .build();
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
         return switch (codeGenType){
-            case VUE_PROJECT ->
-                    AiServices.builder(AiCodeGenService.class)
-                            .chatModel(chatModel)
-                            .streamingChatModel(reasoningStreamingChatModel)
-                            .chatMemoryProvider(memoryId -> chatMemory)
-                            .tools(toolManager.getAllTools())
-                            .hallucinatedToolNameStrategy(toolExecutionRequest
-                                    -> ToolExecutionResultMessage.from(toolExecutionRequest, "没有此工具：" + toolExecutionRequest.name()))
-                            .build();
-            case HTML, MULTI_FILE -> AiServices.builder(AiCodeGenService.class)
+            case VUE_PROJECT ->{
+                StreamingChatModel reasoningStreamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
+                yield AiServices.builder(AiCodeGenService.class)
+                        .chatModel(chatModel)
+                        .streamingChatModel(reasoningStreamingChatModel)
+                        .chatMemoryProvider(memoryId -> chatMemory)
+                        .tools(toolManager.getAllTools())
+                        .hallucinatedToolNameStrategy(toolExecutionRequest
+                                -> ToolExecutionResultMessage.from(toolExecutionRequest, "没有此工具：" + toolExecutionRequest.name()))
+                        .build();
+            }
+            case HTML, MULTI_FILE -> {
+                StreamingChatModel openAiStreamingChatModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
+                yield AiServices.builder(AiCodeGenService.class)
                     .chatModel(chatModel)
                     .streamingChatModel(openAiStreamingChatModel)
                     .chatMemory(chatMemory)
                     .build();
+            }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型: " + codeGenType);
         };
     }
