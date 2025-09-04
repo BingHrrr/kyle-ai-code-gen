@@ -115,6 +115,9 @@ public class WebScreenshotUtil {
         } catch (Exception e) {
             log.error("网页截图失败: {}", webUrl, e);
             return null;
+        } finally {
+            if (driver != null)
+                driver.quit();
         }
     }
 
