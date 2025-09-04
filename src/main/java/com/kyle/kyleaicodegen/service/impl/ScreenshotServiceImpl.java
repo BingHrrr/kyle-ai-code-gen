@@ -6,7 +6,7 @@ import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.exception.ThrowUtils;
 import com.kyle.kyleaicodegen.manager.CosManager;
 import com.kyle.kyleaicodegen.service.ScreenshotService;
-import com.kyle.kyleaicodegen.utils.WebScreenshotUtils;
+import com.kyle.kyleaicodegen.utils.WebScreenshotUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class ScreenshotServiceImpl implements ScreenshotService {
         ThrowUtils.throwIf(StrUtil.isBlank(webUrl), ErrorCode.PARAMS_ERROR,"webUrl 不能为空");
         log.info("开始生成网页截图，URL: {}", webUrl);
         // 生成本地截图
-        String localScreenshotPath = WebScreenshotUtils.saveWebPageScreenshot(webUrl);
+        String localScreenshotPath = WebScreenshotUtil.saveWebPageScreenshot(webUrl);
         ThrowUtils.throwIf(StrUtil.isBlank(localScreenshotPath), ErrorCode.OPERATION_ERROR, "本地截图生成失败");
         try{
             //上传到对象存储

@@ -84,10 +84,10 @@ public class FileWriteTool extends BaseTool{
         // 文件写入内容
         String content = arguments.getStr("content");
         return String.format("""
-                    🖊️[工具调用] %s %s
-                    ```%s
-                        %s
-                    ```
+                🖊️ [工具调用] %s %s
+                ```%s
+                    %s
+                ```
                 """, getDisplayName(), relativeFilePath, suffix, content);
     }
 }

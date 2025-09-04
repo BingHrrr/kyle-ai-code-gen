@@ -14,7 +14,7 @@ public class QuitTool extends BaseTool {
 
     @Override
     public String getToolName() {
-        return "exit";
+        return "quit";
     }
 
     @Override
