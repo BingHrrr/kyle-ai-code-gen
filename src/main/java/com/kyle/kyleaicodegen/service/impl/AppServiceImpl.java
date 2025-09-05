@@ -24,6 +24,8 @@ import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
 import com.kyle.kyleaicodegen.model.vo.AppVO;
 import com.kyle.kyleaicodegen.model.vo.UserVO;
 import com.kyle.kyleaicodegen.mq.producer.ScreenshotTaskProducer;
+import com.kyle.kyleaicodegen.observability.ObserveContext;
+import com.kyle.kyleaicodegen.observability.ObserveContextHolder;
 import com.kyle.kyleaicodegen.service.AppService;
 import com.kyle.kyleaicodegen.service.ChatHistoryService;
 import com.kyle.kyleaicodegen.service.ScreenshotService;
@@ -279,10 +281,21 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         }
         // 5.添加用户消息到数据库
         chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
+        ObserveContextHolder.setContext(
+                ObserveContext.builder()
+                        .appId(appId.toString())
+                        .userId(loginUser.getId().toString())
+                        .build()
+        );
         // 6. 调用 AI 生成代码
         Flux<String> contentStream = aiCodeGenFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
         // 7. 收集AI的响应 结束后存入数据库
-        return streamHandlerExecutor.doExecute(contentStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+        return streamHandlerExecutor.doExecute(contentStream, chatHistoryService, appId, loginUser, codeGenTypeEnum)
+            .doFinally(signalType -> {
+                // 清除上下文
+                        ObserveContextHolder.clearContext();
+                   }
+            );
     }
 
     /**
