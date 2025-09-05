@@ -6,6 +6,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.kyle.kyleaicodegen.ai.AiCodeGenTypeRoutingService;
+import com.kyle.kyleaicodegen.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.kyle.kyleaicodegen.constant.AppConstant;
 import com.kyle.kyleaicodegen.core.AiCodeGenFacade;
 import com.kyle.kyleaicodegen.core.builder.VueProjectBuilder;
@@ -22,6 +23,7 @@ import com.kyle.kyleaicodegen.model.enums.ChatHistoryMessageTypeEnum;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
 import com.kyle.kyleaicodegen.model.vo.AppVO;
 import com.kyle.kyleaicodegen.model.vo.UserVO;
+import com.kyle.kyleaicodegen.mq.producer.ScreenshotTaskProducer;
 import com.kyle.kyleaicodegen.service.AppService;
 import com.kyle.kyleaicodegen.service.ChatHistoryService;
 import com.kyle.kyleaicodegen.service.ScreenshotService;
@@ -30,6 +32,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -50,6 +53,10 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppService{
+
+    @Value("${code.deploy-host:http://localhost}")
+    private String deployHost;
+
     @Resource
     private UserService userService;
 
@@ -69,7 +76,11 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private ScreenshotService screenshotService;
 
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
+
+    @Resource
+    private ScreenshotTaskProducer screenshotTaskProducer;
+
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -146,6 +157,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         // 应用名称暂时为 initPrompt 前 12 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
         // 使用 AI 智能选择代码生成类型
+        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService();
         CodeGenTypeEnum selectedCodeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
         app.setCodeGenType(selectedCodeGenType.getValue());
         // 插入数据库
@@ -210,7 +222,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         boolean updateResult = this.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
         // 10. 返回可访问的 URL
-        String deployUrl = String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        String deployUrl = String.format("%s/%s/", deployHost, deployKey);
         // 部署之后，触发截图+上传
         generateAppScreenshotAsync(appId, deployUrl);
         return deployUrl;
@@ -224,17 +236,27 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
      */
     @Override
     public void generateAppScreenshotAsync(Long appId, String deployUrl) {
+//        log.info("进入截图============");
         // 使用虚拟线程异步执行
-        Thread.startVirtualThread(() -> {
-            // 调用截图服务生成截图并上传
-            String screenshotUrl = screenshotService.generateAndUploadScreenshot(deployUrl);
-            // 更新应用封面字段
-            App updateApp = new App();
-            updateApp.setId(appId);
-            updateApp.setCover(screenshotUrl);
-            boolean updated = this.updateById(updateApp);
-            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
-        });
+//        Thread.startVirtualThread(() -> {
+//            // 调用截图服务生成截图并上传
+//            String screenshotUrl = screenshotService.generateAndUploadScreenshot(deployUrl);
+//            // 更新应用封面字段
+//            App updateApp = new App();
+//            updateApp.setId(appId);
+//            updateApp.setCover(screenshotUrl);
+//            boolean updated = this.updateById(updateApp);
+//            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
+//        });
+        screenshotTaskProducer.sendScreenshotTask(appId, deployUrl);
+    }
+
+    @Override
+    public boolean updateAppCover(Long appId, String screenshotUrl) {
+        App updateApp = new App();
+        updateApp.setId(appId);
+        updateApp.setCover(screenshotUrl);
+        return this.updateById(updateApp);
     }
 
     @Override

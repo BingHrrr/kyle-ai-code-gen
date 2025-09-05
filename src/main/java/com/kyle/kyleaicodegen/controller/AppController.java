@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.kyle.kyleaicodegen.annotation.AuthCheck;
+import com.kyle.kyleaicodegen.annotation.RateLimit;
 import com.kyle.kyleaicodegen.common.BaseResponse;
 import com.kyle.kyleaicodegen.common.DeleteRequest;
 import com.kyle.kyleaicodegen.common.ResultUtils;
@@ -15,6 +16,7 @@ import com.kyle.kyleaicodegen.exception.ThrowUtils;
 import com.kyle.kyleaicodegen.model.dto.app.*;
 import com.kyle.kyleaicodegen.model.entitiy.App;
 import com.kyle.kyleaicodegen.model.entitiy.User;
+import com.kyle.kyleaicodegen.model.enums.RateLimitType;
 import com.kyle.kyleaicodegen.model.vo.AppVO;
 import com.kyle.kyleaicodegen.service.AppService;
 import com.kyle.kyleaicodegen.service.ProjectDownloadService;
@@ -24,6 +26,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -61,6 +64,7 @@ public class AppController {
      * @return 生成结果流
      */
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RateLimit(limitType = RateLimitType.USER, rate = 5, rateInterval = 60, message = "AI 请求过于频繁，请稍后再试")
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
                                                        HttpServletRequest request) {
@@ -266,7 +270,13 @@ public class AppController {
      * @param appQueryRequest 查询请求
      * @return 精选应用列表
      */
+
     @PostMapping("/good/list/page/vo")
+    @Cacheable(
+            value = "good_app_page", // 缓存名
+            key = "T(com.kyle.kyleaicodegen.utils.CacheKeyUtils).generateCacheKey(#appQueryRequest)",
+            condition = "#appQueryRequest != null && #appQueryRequest.pageNum <= 10"
+    )
     public BaseResponse<Page<AppVO>> listGoodAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
         ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 限制每页最多 20 个

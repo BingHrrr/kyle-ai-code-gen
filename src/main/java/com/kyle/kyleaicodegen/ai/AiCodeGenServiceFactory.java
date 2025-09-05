@@ -2,11 +2,13 @@ package com.kyle.kyleaicodegen.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.kyle.kyleaicodegen.ai.tools.FileWriteTool;
+import com.kyle.kyleaicodegen.ai.guardrail.PromptGuardrail;
+import com.kyle.kyleaicodegen.ai.tools.ToolManager;
 import com.kyle.kyleaicodegen.exception.BusinessException;
 import com.kyle.kyleaicodegen.exception.ErrorCode;
 import com.kyle.kyleaicodegen.model.enums.CodeGenTypeEnum;
 import com.kyle.kyleaicodegen.service.ChatHistoryService;
+import com.kyle.kyleaicodegen.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -28,21 +30,18 @@ import java.time.Duration;
 @Configuration
 @Slf4j
 public class AiCodeGenServiceFactory {
-
-    @Resource
+    // 智能路由和普通对话都是chatModel 需要指定name
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
-
-    @Resource
-    private StreamingChatModel openAiStreamingChatModel;
-
-    @Resource
-    private StreamingChatModel reasoningStreamingChatModel;
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ToolManager toolManager;
     /**
      * AI 服务实例缓存
      * 缓存策略：
@@ -88,20 +87,29 @@ public class AiCodeGenServiceFactory {
                 .build();
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
         return switch (codeGenType){
-            case VUE_PROJECT ->
-                    AiServices.builder(AiCodeGenService.class)
-                            .chatModel(chatModel)
-                            .streamingChatModel(reasoningStreamingChatModel)
-                            .chatMemoryProvider(memoryId -> chatMemory)
-                            .tools(new FileWriteTool())
-                            .hallucinatedToolNameStrategy(toolExecutionRequest
-                                    -> ToolExecutionResultMessage.from(toolExecutionRequest, "没有此工具：" + toolExecutionRequest.name()))
-                            .build();
-            case HTML, MULTI_FILE -> AiServices.builder(AiCodeGenService.class)
+            case VUE_PROJECT ->{
+                StreamingChatModel reasoningStreamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
+                yield AiServices.builder(AiCodeGenService.class)
+                        .chatModel(chatModel)
+                        .streamingChatModel(reasoningStreamingChatModel)
+                        .chatMemoryProvider(memoryId -> chatMemory)
+                        .tools(toolManager.getAllTools())
+                        .inputGuardrails(new PromptGuardrail())
+                        // 幻觉解决策略
+                        .hallucinatedToolNameStrategy(toolExecutionRequest
+                                -> ToolExecutionResultMessage.from(toolExecutionRequest, "没有此工具：" + toolExecutionRequest.name()))
+                        .maxSequentialToolsInvocations(30)  //每次最大调用工具次数
+                        .build();
+            }
+            case HTML, MULTI_FILE -> {
+                StreamingChatModel openAiStreamingChatModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
+                yield AiServices.builder(AiCodeGenService.class)
                     .chatModel(chatModel)
                     .streamingChatModel(openAiStreamingChatModel)
+                    .inputGuardrails(new PromptGuardrail())
                     .chatMemory(chatMemory)
                     .build();
+            }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型: " + codeGenType);
         };
     }

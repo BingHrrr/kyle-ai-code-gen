@@ -1,10 +1,13 @@
 package com.kyle.kyleaicodegen.ai.tools;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.json.JSONObject;
 import com.kyle.kyleaicodegen.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +23,8 @@ import java.nio.file.StandardOpenOption;
  * @since 2025
  */
 @Slf4j
-public class FileWriteTool {
+@Component
+public class FileWriteTool extends BaseTool{
 
     @Tool("写入文件到指定路径")
     public String writeFile(
@@ -55,5 +59,35 @@ public class FileWriteTool {
             log.error(errorMessage, e);
             return errorMessage;
         }
+    }
+
+    @Override
+    public String getToolName() {
+        return "writeFile";
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "文件写入工具";
+    }
+
+    /**
+     * 工具执行结果
+     * @param arguments 工具执行参数
+     * @return
+     */
+    @Override
+    public String generateToolExecutedResult(JSONObject arguments) {
+        String relativeFilePath = arguments.getStr("relativeFilePath");
+        // 获取后缀 用于指定markdown代码块的语言
+        String suffix = FileUtil.getSuffix(relativeFilePath);
+        // 文件写入内容
+        String content = arguments.getStr("content");
+        return String.format("""
+                🖊️ [工具调用] %s %s
+                ```%s
+                    %s
+                ```
+                """, getDisplayName(), relativeFilePath, suffix, content);
     }
 }
