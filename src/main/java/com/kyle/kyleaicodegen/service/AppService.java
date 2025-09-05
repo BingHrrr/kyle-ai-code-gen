@@ -20,6 +20,8 @@ public interface AppService extends IService<App> {
 
     void generateAppScreenshotAsync(Long appId, String appUrl);
 
+    boolean updateAppCover(Long appId, String screenshotUrl);
+
     /**
      * 通过对话生成应用代码
      *
