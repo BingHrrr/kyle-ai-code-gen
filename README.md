@@ -1,4 +1,4 @@
-### CodeCube：
+### Build-X：
 #### 主页展示：
 ![index.png](https://github.com/BingHrrr/kyle-ai-code-gen/blob/master/img/index.png?raw=true)
 #### 架构图：
