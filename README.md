@@ -2,7 +2,7 @@
 #### 主页展示：
 ![index.png](https://github.com/BingHrrr/kyle-ai-code-gen/blob/master/img/index.png?raw=true)
 #### 架构图：
-待更新
+![home.png](https://github.com/BingHrrr/kyle-ai-code-gen/blob/master/img/Build-X-sys.png?raw=true)
 #### 技术选型(后端)：
 ##### 框架
 - SpringBoot 3.x
@@ -20,6 +20,9 @@
 ##### 数据监控
 - ARMS
 - Grafana + Prometheus
+##### 云服务
+- 腾讯云对象存储
+- 腾讯云服务器-Ubantu 22.04 + 1Panel
 ###### Grafana 看板样例：
 ![grafana](https://raw.githubusercontent.com/BingHrrr/kyle-ai-code-gen/70840e2c50332f4d33e1ea44298cdc6e93d9ae24/img/codecube.png)
 
