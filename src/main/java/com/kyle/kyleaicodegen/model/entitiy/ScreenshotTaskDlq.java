@@ -36,6 +36,12 @@ public class ScreenshotTaskDlq implements Serializable {
     private Long id;
 
     /**
+     * 消息唯一ID
+     */
+    @Column("messageId")
+    private String messageId;
+
+    /**
      * 应用ID
      */
     @Column("appId")
@@ -60,7 +66,7 @@ public class ScreenshotTaskDlq implements Serializable {
     private Integer retryCount;
 
     /**
-     * 状态：0=未处理，1=已处理
+     * 状态：0=未处理，1=已处理成功，2=处理中，3=处理失败
      */
     private Integer status;
 

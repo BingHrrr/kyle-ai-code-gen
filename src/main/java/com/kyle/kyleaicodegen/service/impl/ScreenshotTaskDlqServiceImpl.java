@@ -1,5 +1,6 @@
 package com.kyle.kyleaicodegen.service.impl;
 
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.kyle.kyleaicodegen.model.entitiy.ScreenshotTaskDlq;
 import com.kyle.kyleaicodegen.mapper.ScreenshotTaskDlqMapper;
@@ -14,4 +15,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class ScreenshotTaskDlqServiceImpl extends ServiceImpl<ScreenshotTaskDlqMapper, ScreenshotTaskDlq>  implements ScreenshotTaskDlqService{
 
+    @Override
+    public boolean existsByMessageId(String messageId) {
+        QueryWrapper queryWrapper = this.query().eq(ScreenshotTaskDlq::getMessageId, messageId);
+        return this.exists(queryWrapper);
+    }
 }

@@ -21,15 +21,17 @@ public class ScreenshotTaskConsumer {
     private final ScreenshotServiceImpl screenshotService;
     private final AppServiceImpl appService;
 
-
     @RabbitListener(queues = RabbitMQConfig.SCREENSHOT_QUEUE)
     @Retryable(
             retryFor = Exception.class, // 哪些异常触发重试
             maxAttempts = 3,// 最大重试次数
             backoff = @Backoff(delay = 2000, multiplier = 2) // 指数退避
     )
-    public void handleScreenshotMessage(ScreenshotMessage message) {
-        log.info("收到消息: {}", message);
+    public void handleScreenshotMessage(
+            ScreenshotMessage message
+    ) {
+        String messageId = message.getMassageId();
+        log.info("收到消息: {}, messageId={}", message, messageId);
         // 执行截图逻辑
         String cosUrl = screenshotService.generateAndUploadScreenshot(message.getDeployUrl());
         // 更新应用封面

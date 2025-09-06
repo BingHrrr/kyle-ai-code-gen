@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ScreenshotMessage {
     private Long appId;
     private String deployUrl;
+    private String massageId;
 }
