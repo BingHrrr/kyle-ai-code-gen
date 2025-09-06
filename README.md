@@ -24,7 +24,7 @@
 - 腾讯云对象存储
 - 腾讯云服务器-Ubantu 22.04 + 1Panel
 ###### Grafana 看板样例：
-![grafana](https://raw.githubusercontent.com/BingHrrr/kyle-ai-code-gen/70840e2c50332f4d33e1ea44298cdc6e93d9ae24/img/codecube.png)
+![grafana](https://github.com/BingHrrr/kyle-ai-code-gen/blob/master/img/Build-X.png?raw=true)
 
 #### 可视化修改前后对比：
 ##### 修改前：
