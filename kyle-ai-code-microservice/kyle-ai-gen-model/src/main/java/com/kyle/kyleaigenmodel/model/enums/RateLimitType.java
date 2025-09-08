@@ -1,4 +1,4 @@
-package com.kyle.kyleaicodegen.model.enums;
+package com.kyle.kyleaigenmodel.model.enums;
 
 public enum RateLimitType {
     
