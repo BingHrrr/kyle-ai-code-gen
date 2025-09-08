@@ -1,6 +1,4 @@
-package com.kyle.kyleaicodegen.annotation;
-
-import com.kyle.kyleaicodegen.model.enums.RateLimitType;
+package com.kyle.kyleaigenapp.ratelimiter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

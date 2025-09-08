@@ -1,4 +1,4 @@
-package com.kyle.kyleaicodegen.config;
+package com.kyle.kyleaigenapp.ratelimiter;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

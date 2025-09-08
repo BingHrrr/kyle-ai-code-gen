@@ -1,10 +1,10 @@
-package com.kyle.kyleaicodegen.aop;
+package com.kyle.kyleaigenapp.ratelimiter;
 
-import com.kyle.kyleaicodegen.annotation.RateLimit;
-import com.kyle.kyleaicodegen.exception.BusinessException;
-import com.kyle.kyleaicodegen.exception.ErrorCode;
-import com.kyle.kyleaicodegen.model.entitiy.User;
-import com.kyle.kyleaicodegen.service.UserService;
+
+import com.kyle.kyleaigenclient.proxy.UserServiceProxy;
+import com.kyle.kyleaigencommon.exception.BusinessException;
+import com.kyle.kyleaigencommon.exception.ErrorCode;
+import com.kyle.kyleaigenmodel.model.entitiy.User;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -36,9 +36,6 @@ public class RateLimitAspect {
 
     @Resource
     private RedissonClient redissonClient;
-
-    @Resource
-    private UserService userService;
 
     @Before("@annotation(rateLimit)")
     public void doBefore(JoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
@@ -75,7 +72,7 @@ public class RateLimitAspect {
                     ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                     if (attributes != null) {
                         HttpServletRequest request = attributes.getRequest();
-                        User loginUser = userService.getLoginUser(request);
+                        User loginUser = UserServiceProxy.getLoginUser(request);
                         keyBuilder.append("user:").append(loginUser.getId());
                     } else {
                         // 无法获取请求上下文，使用IP限流
