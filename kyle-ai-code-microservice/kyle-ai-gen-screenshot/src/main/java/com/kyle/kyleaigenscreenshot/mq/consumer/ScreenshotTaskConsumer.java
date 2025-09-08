@@ -7,6 +7,7 @@ import com.kyle.kyleaigenscreenshot.service.impl.ScreenshotServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.context.annotation.Lazy;
@@ -21,8 +22,7 @@ public class ScreenshotTaskConsumer {
     @Resource
     private ScreenshotServiceImpl screenshotService;
 
-    @Resource
-    @Lazy
+    @DubboReference
     private AppServiceProxy appServiceProxy;
 
     @RabbitListener(queues = RabbitMQConfig.SCREENSHOT_QUEUE)
